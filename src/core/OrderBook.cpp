@@ -4,26 +4,28 @@
 
 namespace tme {
 
-OrderBook::OrderBook(const std::string& symbol) : symbol_(symbol) {}
+using namespace std;
+
+OrderBook::OrderBook(const string& symbol) : symbol_(symbol) {}
 
 void OrderBook::addOrder(const Order& order) {
-    std::unique_lock<std::shared_mutex> lock(mutex_);
+    unique_lock<shared_mutex> lock(mutex_);
     
     if (order.side == Side::BUY) {
         auto& priceLevel = buyOrders_[order.price];
         priceLevel.push_back(order);
-        auto it = std::prev(priceLevel.end());
-        orderLookup_[order.orderId] = std::make_pair(order.price, it);
+        auto it = prev(priceLevel.end());
+        orderLookup_[order.orderId] = make_pair(order.price, it);
     } else {
         auto& priceLevel = sellOrders_[order.price];
         priceLevel.push_back(order);
-        auto it = std::prev(priceLevel.end());
-        orderLookup_[order.orderId] = std::make_pair(order.price, it);
+        auto it = prev(priceLevel.end());
+        orderLookup_[order.orderId] = make_pair(order.price, it);
     }
 }
 
 bool OrderBook::cancelOrder(uint64_t orderId) {
-    std::unique_lock<std::shared_mutex> lock(mutex_);
+    unique_lock<shared_mutex> lock(mutex_);
     
     auto lookup = orderLookup_.find(orderId);
     if (lookup == orderLookup_.end()) {
@@ -59,9 +61,9 @@ bool OrderBook::cancelOrder(uint64_t orderId) {
 
 }
 
-std::vector<std::pair<Order, Order>> OrderBook::matchOrders() {
-    std::unique_lock<std::shared_mutex> lock(mutex_);
-    std::vector<std::pair<Order, Order>> matches;
+vector<pair<Order, Order>> OrderBook::matchOrders() {
+    unique_lock<shared_mutex> lock(mutex_);
+    vector<pair<Order, Order>> matches;
     
     // Keep matching as long as there are overlapping buy and sell orders
     while (!buyOrders_.empty() && !sellOrders_.empty()) {
@@ -81,7 +83,7 @@ std::vector<std::pair<Order, Order>> OrderBook::matchOrders() {
         Order& sellOrder = bestAskLevel.front();
         
         // Determine the matched quantity
-        uint32_t matchedQuantity = std::min(buyOrder.quantity, sellOrder.quantity);
+        uint32_t matchedQuantity = min(buyOrder.quantity, sellOrder.quantity);
         
         // Create matched pair
         matches.emplace_back(buyOrder, sellOrder);
@@ -114,17 +116,17 @@ std::vector<std::pair<Order, Order>> OrderBook::matchOrders() {
 }
 
 double OrderBook::getBestBid() const {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
+    shared_lock<shared_mutex> lock(mutex_);
     return buyOrders_.empty() ? 0.0 : buyOrders_.begin()->first;
 }
 
 double OrderBook::getBestAsk() const {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
+    shared_lock<shared_mutex> lock(mutex_);
     return sellOrders_.empty() ? 0.0 : sellOrders_.begin()->first;
 }
 
 uint32_t OrderBook::getVolumeAtPrice(Side side, double price) const {
-    std::shared_lock<std::shared_mutex> lock(mutex_);
+    shared_lock<shared_mutex> lock(mutex_);
     
     if (side == Side::BUY) {
         auto it = buyOrders_.find(price);

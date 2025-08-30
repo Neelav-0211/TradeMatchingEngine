@@ -14,9 +14,9 @@ else()
 endif()
 
 # Include directories
-include_directories(include)
+include_directories(src)
 
-# Add source files
+# Collect source files from subdirectories
 file(GLOB_RECURSE SOURCES "src/*.cpp")
 
 # Create the executable

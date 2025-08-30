@@ -6,6 +6,8 @@
 
 namespace tme {
 
+using namespace std;
+
 enum class OrderType {
     LIMIT,
     MARKET,
@@ -20,12 +22,12 @@ enum class Side {
 
 struct Order {
     uint64_t orderId;
-    std::string symbol;
+    string symbol;
     double price;
     uint32_t quantity;
     Side side;
     OrderType type;
-    std::chrono::time_point<std::chrono::steady_clock> timestamp;
+    chrono::time_point<chrono::steady_clock> timestamp;
     
     // For efficient comparison in containers
     bool operator<(const Order& other) const {

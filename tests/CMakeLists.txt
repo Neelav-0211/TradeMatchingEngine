@@ -13,8 +13,8 @@ endif()
 # Test executable
 file(GLOB TEST_SOURCES "*.cpp")
 add_executable(test_matching_engine ${TEST_SOURCES} 
-                                   "${CMAKE_SOURCE_DIR}/src/OrderBook.cpp"
-                                   "${CMAKE_SOURCE_DIR}/src/MatchingEngine.cpp")
+                                   "${CMAKE_SOURCE_DIR}/src/core/OrderBook.cpp"
+                                   "${CMAKE_SOURCE_DIR}/src/core/MatchingEngine.cpp")
 
 # Link with Google Test and the main library
 target_link_libraries(test_matching_engine gtest gtest_main)

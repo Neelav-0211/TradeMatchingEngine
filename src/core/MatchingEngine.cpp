@@ -2,6 +2,8 @@
 
 namespace tme {
 
+using namespace std;
+
 MatchingEngine::MatchingEngine() = default;
 MatchingEngine::~MatchingEngine() = default;
 
@@ -18,19 +20,25 @@ void MatchingEngine::processOrder(const Order& order) {
     // Left as a placeholder for future implementation
 }
 
-bool MatchingEngine::cancelOrder(uint64_t orderId, const std::string& symbol) {
-    std::lock_guard<std::mutex> lock(mutex_);
+bool MatchingEngine::cancelOrder(uint64_t orderId, const string& symbol) {
+    shared_ptr<OrderBook> orderBook;
     
-    auto it = orderBooks_.find(symbol);
-    if (it == orderBooks_.end()) {
-        return false;  // Symbol not found
+    // Only lock while accessing the map
+    {
+        lock_guard<mutex> lock(mutex_);
+        auto it = orderBooks_.find(symbol);
+        if (it == orderBooks_.end()) {
+            return false;  // Symbol not found
+        }
+        orderBook = it->second;
     }
     
-    return it->second->cancelOrder(orderId);
+    // Now use the thread-safe orderBook outside the lock
+    return orderBook->cancelOrder(orderId);
 }
 
-std::shared_ptr<OrderBook> MatchingEngine::getOrderBook(const std::string& symbol) {
-    std::lock_guard<std::mutex> lock(mutex_);
+shared_ptr<OrderBook> MatchingEngine::getOrderBook(const string& symbol) {
+    lock_guard<mutex> lock(mutex_);
     
     auto it = orderBooks_.find(symbol);
     if (it == orderBooks_.end()) {
@@ -40,13 +48,13 @@ std::shared_ptr<OrderBook> MatchingEngine::getOrderBook(const std::string& symbo
     return it->second;
 }
 
-std::shared_ptr<OrderBook> MatchingEngine::getOrCreateOrderBook(const std::string& symbol) {
-    std::lock_guard<std::mutex> lock(mutex_);
+shared_ptr<OrderBook> MatchingEngine::getOrCreateOrderBook(const string& symbol) {
+    lock_guard<mutex> lock(mutex_);
     
     auto it = orderBooks_.find(symbol);
     if (it == orderBooks_.end()) {
         // Create new order book for this symbol
-        auto orderBook = std::make_shared<OrderBook>(symbol);
+        auto orderBook = make_shared<OrderBook>(symbol);
         orderBooks_[symbol] = orderBook;
         return orderBook;
     }

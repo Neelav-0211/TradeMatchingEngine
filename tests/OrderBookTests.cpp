@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
-#include "OrderBook.hpp"
-#include "MatchingEngine.hpp"
+#include "../src/core/OrderBook.hpp"
+#include "../src/core/MatchingEngine.hpp"
 
 using namespace tme;
 

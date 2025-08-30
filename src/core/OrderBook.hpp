@@ -11,13 +11,15 @@
 
 namespace tme {
 
+using namespace std;
+
 /**
  * OrderBook maintains a list of buy and sell orders for a specific instrument.
  * It's optimized for fast insertion, deletion, and matching of orders.
  */
 class OrderBook {
 public:
-    explicit OrderBook(const std::string& symbol);
+    explicit OrderBook(const string& symbol);
     
     // Add a new order to the book
     void addOrder(const Order& order);
@@ -26,7 +28,7 @@ public:
     bool cancelOrder(uint64_t orderId);
     
     // Match orders and execute trades
-    std::vector<std::pair<Order, Order>> matchOrders();
+    vector<pair<Order, Order>> matchOrders();
     
     // Get best bid/ask prices
     double getBestBid() const;
@@ -36,18 +38,18 @@ public:
     uint32_t getVolumeAtPrice(Side side, double price) const;
     
 private:
-    std::string symbol_;
+    string symbol_;
     
     // Price-time priority queues for buy and sell orders
     // Using map for price levels and list for time priority
-    std::map<double, std::list<Order>, std::greater<>> buyOrders_;  // Higher prices first
-    std::map<double, std::list<Order>> sellOrders_;                 // Lower prices first
+    map<double, list<Order>, greater<>> buyOrders_;  // Higher prices first
+    map<double, list<Order>> sellOrders_;                 // Lower prices first
     
     // Fast lookup by order ID
-    std::unordered_map<uint64_t, std::pair<double, std::list<Order>::iterator>> orderLookup_;
+    unordered_map<uint64_t, pair<double, list<Order>::iterator>> orderLookup_;
     
     // Thread safety
-    mutable std::shared_mutex mutex_;
+    mutable shared_mutex mutex_;
 };
 
 } // namespace tme

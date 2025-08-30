@@ -8,6 +8,8 @@
 
 namespace tme {
 
+using namespace std;
+
 /**
  * The main matching engine class that processes orders and maintains
  * order books for different symbols.
@@ -21,20 +23,20 @@ public:
     void processOrder(const Order& order);
     
     // Cancel an existing order
-    bool cancelOrder(uint64_t orderId, const std::string& symbol);
+    bool cancelOrder(uint64_t orderId, const string& symbol);
     
     // Get order book for a symbol
-    std::shared_ptr<OrderBook> getOrderBook(const std::string& symbol);
+    shared_ptr<OrderBook> getOrderBook(const string& symbol);
     
 private:
     // Map of symbol to order book
-    std::unordered_map<std::string, std::shared_ptr<OrderBook>> orderBooks_;
+    unordered_map<string, shared_ptr<OrderBook>> orderBooks_;
     
     // Thread safety
-    std::mutex mutex_;
+    mutex mutex_;
     
     // Creates a new order book if it doesn't exist
-    std::shared_ptr<OrderBook> getOrCreateOrderBook(const std::string& symbol);
+    shared_ptr<OrderBook> getOrCreateOrderBook(const string& symbol);
 };
 
 } // namespace tme

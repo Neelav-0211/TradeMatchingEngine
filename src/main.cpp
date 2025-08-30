@@ -1,64 +1,37 @@
-#include "MatchingEngine.hpp"
+#include "core/MatchingEngine.hpp"
+#include "gen/RandomOrderGenerator.hpp"
 #include <iostream>
 #include <iomanip>
 #include <thread>
 #include <chrono>
 #include <random>
-#include <atomic>
 
 using namespace tme;
+using namespace tme::gen;
 using namespace std::chrono;
-
-// Generate a unique order ID
-uint64_t generateOrderId() {
-    static std::atomic<uint64_t> nextOrderId{1};
-    return nextOrderId.fetch_add(1, std::memory_order_relaxed);
-}
-
-// Create a random order
-Order createRandomOrder(const std::string& symbol, std::mt19937& rng) {
-    // Price between 90.0 and 110.0
-    std::uniform_real_distribution<> priceDist(90.0, 110.0);
-    
-    // Quantity between 1 and 100
-    std::uniform_int_distribution<> quantityDist(1, 100);
-    
-    // 50% chance of buy or sell
-    std::uniform_int_distribution<> sideDist(0, 1);
-    
-    Order order;
-    order.orderId = generateOrderId();
-    order.symbol = symbol;
-    order.price = std::round(priceDist(rng) * 100) / 100;  // Round to 2 decimal places
-    order.quantity = quantityDist(rng);
-    order.side = sideDist(rng) == 0 ? Side::BUY : Side::SELL;
-    order.type = OrderType::LIMIT;
-    order.timestamp = steady_clock::now();
-    
-    return order;
-}
+using namespace std;
 
 // Print order book status
-void printOrderBookStatus(const std::shared_ptr<OrderBook>& orderBook) {
+void printOrderBookStatus(const shared_ptr<OrderBook>& orderBook) {
     double bestBid = orderBook->getBestBid();
     double bestAsk = orderBook->getBestAsk();
     
-    std::cout << "Best Bid: " << std::fixed << std::setprecision(2) << bestBid;
-    std::cout << " (" << orderBook->getVolumeAtPrice(Side::BUY, bestBid) << ")";
+    cout << "Best Bid: " << fixed << setprecision(2) << bestBid;
+    cout << " (" << orderBook->getVolumeAtPrice(Side::BUY, bestBid) << ")";
     
-    std::cout << " | Best Ask: " << bestAsk;
-    std::cout << " (" << orderBook->getVolumeAtPrice(Side::SELL, bestAsk) << ")" << std::endl;
+    cout << " | Best Ask: " << bestAsk;
+    cout << " (" << orderBook->getVolumeAtPrice(Side::SELL, bestAsk) << ")" << endl;
     
     double spread = bestAsk - bestBid;
     if (bestBid > 0 && bestAsk > 0) {
-        std::cout << "Spread: " << spread << " (" << (spread / bestBid * 100) << "%)" << std::endl;
+        cout << "Spread: " << spread << " (" << (spread / bestBid * 100) << "%)" << endl;
     }
 }
 
 // Benchmark adding orders
-void benchmarkAddOrders(MatchingEngine& engine, const std::string& symbol, int numOrders) {
-    std::random_device rd;
-    std::mt19937 rng(rd());
+void benchmarkAddOrders(MatchingEngine& engine, const string& symbol, int numOrders) {
+    random_device rd;
+    mt19937 rng(rd());
     
     auto start = high_resolution_clock::now();
     
@@ -70,16 +43,16 @@ void benchmarkAddOrders(MatchingEngine& engine, const std::string& symbol, int n
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
     
-    std::cout << "Added " << numOrders << " orders in " << duration.count() << " microseconds" << std::endl;
-    std::cout << "Average time per order: " << (duration.count() / numOrders) << " microseconds" << std::endl;
+    cout << "Added " << numOrders << " orders in " << duration.count() << " microseconds" << endl;
+    cout << "Average time per order: " << (duration.count() / numOrders) << " microseconds" << endl;
 }
 
 int main() {
     MatchingEngine engine;
-    const std::string symbol = "AAPL";
+    const string symbol = "AAPL";
     
-    std::cout << "Trade Matching Engine Demo" << std::endl;
-    std::cout << "-------------------------" << std::endl;
+    cout << "Trade Matching Engine Demo" << endl;
+    cout << "-------------------------" << endl;
     
     // Benchmark with 10,000 orders
     benchmarkAddOrders(engine, symbol, 10000);
