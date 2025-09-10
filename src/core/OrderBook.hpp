@@ -24,6 +24,9 @@ public:
     // Add a new order to the book
     void addOrder(const Order& order);
     
+    // Add multiple orders efficiently in bulk
+    void addOrdersBatch(const vector<Order>& orders);
+    
     // Cancel an existing order
     bool cancelOrder(uint64_t orderId);
     
@@ -31,22 +34,22 @@ public:
     vector<pair<Order, Order>> matchOrders();
     
     // Get best bid/ask prices
-    double getBestBid() const;
-    double getBestAsk() const;
+    uint32_t getBestBid() const;
+    uint32_t getBestAsk() const;
     
     // Get total volume at a price level
-    uint32_t getVolumeAtPrice(Side side, double price) const;
+    uint32_t getVolumeAtPrice(Side side, uint32_t price) const;
     
 private:
     string symbol_;
     
     // Price-time priority queues for buy and sell orders
     // Using map for price levels and list for time priority
-    map<double, list<Order>, greater<>> buyOrders_;  // Higher prices first
-    map<double, list<Order>> sellOrders_;                 // Lower prices first
+    map<uint32_t, list<Order>, greater<>> buyOrders_;  // Higher prices first
+    map<uint32_t, list<Order>> sellOrders_;            // Lower prices first
     
     // Fast lookup by order ID
-    unordered_map<uint64_t, pair<double, list<Order>::iterator>> orderLookup_;
+    unordered_map<uint64_t, pair<uint32_t, list<Order>::iterator>> orderLookup_;
     
     // Thread safety
     mutable shared_mutex mutex_;

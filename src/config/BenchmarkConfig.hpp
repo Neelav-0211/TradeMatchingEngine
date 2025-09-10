@@ -12,6 +12,7 @@ public:
     // Test parameters
     static constexpr uint64_t NUM_ORDERS = 10000000;
     static constexpr uint64_t NUM_SYMBOLS = 100;
+    static constexpr size_t NUM_THREADS = 16;  // Number of worker threads
     static constexpr const char* OUTPUT_FILE = "../benchmark_results.csv";
     
     // Test description

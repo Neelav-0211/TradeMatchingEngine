@@ -17,8 +17,8 @@ using namespace std;
 
 // Print order book status
 void printOrderBookStatus(const shared_ptr<OrderBook>& orderBook) {
-    double bestBid = orderBook->getBestBid();
-    double bestAsk = orderBook->getBestAsk();
+    uint32_t bestBid = orderBook->getBestBid();
+    uint32_t bestAsk = orderBook->getBestAsk();
     
     cout << "Best Bid: " << fixed << setprecision(2) << bestBid;
     cout << " (" << orderBook->getVolumeAtPrice(Side::BUY, bestBid) << ")";
@@ -26,9 +26,9 @@ void printOrderBookStatus(const shared_ptr<OrderBook>& orderBook) {
     cout << " | Best Ask: " << bestAsk;
     cout << " (" << orderBook->getVolumeAtPrice(Side::SELL, bestAsk) << ")" << endl;
     
-    double spread = bestAsk - bestBid;
+    uint32_t spread = bestAsk - bestBid;
     if (bestBid > 0 && bestAsk > 0) {
-        cout << "Spread: " << spread << " (" << (spread / bestBid * 100) << "%)" << endl;
+        cout << "Spread: " << spread << " (" << (static_cast<double>(spread) / bestBid * 100) << "%)" << endl;
     }
 }
 
@@ -44,7 +44,7 @@ BenchmarkResult benchmarkAddOrders(MatchingEngine& engine, uint64_t numOrders, u
     auto genDuration = duration_cast<microseconds>(genEnd - genStart);
     
     cout << "Order generation completed in " << genDuration.count() << " microseconds" << endl;
-    cout << "Processing orders in batch..." << endl;
+    cout << "Processing orders in parallel batches grouped by symbol..." << endl;
     
     auto start = high_resolution_clock::now();
     auto timestamp = system_clock::now(); // Record timestamp for the benchmark
@@ -70,10 +70,12 @@ BenchmarkResult benchmarkAddOrders(MatchingEngine& engine, uint64_t numOrders, u
 }
 
 int main() {
-    MatchingEngine engine;
+    // Use parallel matching engine with configured number of threads
+    MatchingEngine engine(BenchmarkConfig::NUM_THREADS);
     
-    cout << "Trade Matching Engine Demo" << endl;
-    cout << "-------------------------" << endl;
+    cout << "Trade Matching Engine Demo (Parallel)" << endl;
+    cout << "Using " << BenchmarkConfig::NUM_THREADS << " worker threads" << endl;
+    cout << "-------------------------------------" << endl;
 
     // Use constants from configuration
     const uint64_t num_orders = BenchmarkConfig::NUM_ORDERS;
