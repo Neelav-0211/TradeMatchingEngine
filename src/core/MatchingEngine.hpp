@@ -40,10 +40,33 @@ public:
     shared_ptr<OrderBook> getOrderBook(const string& symbol);
     
 private:
-    // Task structure for thread pool
+    // Task structure for thread pool with promise/future support
     struct Task {
         string symbol;
         vector<Order> orders;
+        promise<void> completion_promise;
+        
+        Task() = default;
+        Task(const string& sym, const vector<Order>& ord) : symbol(sym), orders(ord) {}
+        
+        // Move constructor and assignment
+        Task(Task&& other) noexcept 
+            : symbol(move(other.symbol)), 
+              orders(move(other.orders)), 
+              completion_promise(move(other.completion_promise)) {}
+        
+        Task& operator=(Task&& other) noexcept {
+            if (this != &other) {
+                symbol = move(other.symbol);
+                orders = move(other.orders);
+                completion_promise = move(other.completion_promise);
+            }
+            return *this;
+        }
+        
+        // Delete copy constructor and assignment
+        Task(const Task&) = delete;
+        Task& operator=(const Task&) = delete;
     };
     
     // Map of symbol to order book

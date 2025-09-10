@@ -56,6 +56,8 @@ namespace tme
             
             if (!task.symbol.empty()) {
                 processSymbolOrders(task.symbol, task.orders);
+                // Signal completion via promise
+                task.completion_promise.set_value();
             }
         }
     }
@@ -88,35 +90,27 @@ namespace tme
                 symbolGroups[newOrder.order.symbol].push_back(newOrder.order);
             }
         }
+
+        // Create futures for synchronization
+        vector<future<void>> futures;
+        futures.reserve(symbolGroups.size());
         
         // Submit tasks to thread pool for parallel processing
         {
             lock_guard<mutex> lock(taskMutex_);
             for (const auto &[symbol, orders] : symbolGroups) {
-                tasks_.push({symbol, orders});
+                Task task(symbol, orders);
+                futures.push_back(task.completion_promise.get_future());
+                tasks_.push(move(task));
             }
         }
         
         taskCondition_.notify_all();
         
-        // Wait for all tasks to complete using a counter-based approach
-        size_t totalTasks = symbolGroups.size();
-        size_t processedTasks = 0;
-        
-        while (processedTasks < totalTasks) {
-            {
-                lock_guard<mutex> lock(taskMutex_);
-                size_t remainingTasks = tasks_.size();
-                processedTasks = totalTasks - remainingTasks;
-            }
-            
-            if (processedTasks < totalTasks) {
-                this_thread::sleep_for(chrono::microseconds(10));
-            }
+        // Wait for all tasks to complete using futures
+        for (auto& future : futures) {
+            future.wait();
         }
-        
-        // Additional small delay to ensure all processing is complete
-        this_thread::sleep_for(chrono::milliseconds(1));
     }
 
     void MatchingEngine::processSymbolOrders(const string& symbol, const vector<Order>& orders) {
