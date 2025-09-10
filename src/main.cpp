@@ -1,5 +1,7 @@
 #include "core/MatchingEngine.hpp"
 #include "gen/RandomOrderGenerator.hpp"
+#include "config/BenchmarkConfig.hpp"
+#include "perf/PerformanceRecorder.hpp"
 #include <iostream>
 #include <iomanip>
 #include <thread>
@@ -8,6 +10,8 @@
 
 using namespace tme;
 using namespace tme::gen;
+using namespace tme::config;
+using namespace tme::perf;
 using namespace std::chrono;
 using namespace std;
 
@@ -28,37 +32,61 @@ void printOrderBookStatus(const shared_ptr<OrderBook>& orderBook) {
     }
 }
 
-// Benchmark adding orders
-void benchmarkAddOrders(MatchingEngine& engine, const string& symbol, int numOrders) {
+// Benchmark orders and record performance metrics
+BenchmarkResult benchmarkAddOrders(MatchingEngine& engine, uint64_t numOrders, uint64_t num_symbols) {
     random_device rd;
-    mt19937 rng(rd());
+    RandomOrderGenerator generator(rd(), num_symbols); 
+    
+    cout << "Generating " << numOrders << " orders..." << endl;
+    auto genStart = high_resolution_clock::now();
+    auto commands = generator.generate(numOrders);
+    auto genEnd = high_resolution_clock::now();
+    auto genDuration = duration_cast<microseconds>(genEnd - genStart);
+    
+    cout << "Order generation completed in " << genDuration.count() << " microseconds" << endl;
+    cout << "Processing orders in batch..." << endl;
     
     auto start = high_resolution_clock::now();
-    
-    for (int i = 0; i < numOrders; ++i) {
-        auto order = createRandomOrder(symbol, rng);
-        engine.processOrder(order);
-    }
-    
+    auto timestamp = system_clock::now(); // Record timestamp for the benchmark
+    engine.processBatch(commands);
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
     
-    cout << "Added " << numOrders << " orders in " << duration.count() << " microseconds" << endl;
-    cout << "Average time per order: " << (duration.count() / numOrders) << " microseconds" << endl;
+    double avgTimePerOrder = static_cast<double>(duration.count()) / numOrders;
+    
+    cout << "Processed " << numOrders << " orders in " << duration.count() << " microseconds" << endl;
+    cout << "Average time per order: " << fixed << setprecision(3) << avgTimePerOrder << " microseconds" << endl;
+    
+    // Create and return benchmark result
+    BenchmarkResult result;
+    result.timestamp = timestamp;
+    result.totalTimeMicroseconds = duration.count();
+    result.numberOfSymbols = num_symbols;
+    result.numberOfOrders = numOrders;
+    result.timePerOrderMicroseconds = avgTimePerOrder;
+    result.description = BenchmarkConfig::TEST_DESCRIPTION;
+    
+    return result;
 }
 
 int main() {
     MatchingEngine engine;
-    const string symbol = "AAPL";
     
     cout << "Trade Matching Engine Demo" << endl;
     cout << "-------------------------" << endl;
+
+    // Use constants from configuration
+    const uint64_t num_orders = BenchmarkConfig::NUM_ORDERS;
+    const uint64_t num_symbols = BenchmarkConfig::NUM_SYMBOLS;
     
-    // Benchmark with 10,000 orders
-    benchmarkAddOrders(engine, symbol, 10000);
+    // Run benchmark and get results
+    BenchmarkResult result = benchmarkAddOrders(engine, num_orders, num_symbols);
     
-    // Get and print order book status
-    auto orderBook = engine.getOrderBook(symbol);
+    // Record results to output file
+    PerformanceRecorder::recordResult(result, BenchmarkConfig::OUTPUT_FILE);
+    
+    // Get and print order book status for the first symbol
+    auto orderBook = engine.getOrderBook("SYM0");
     if (orderBook) {
         printOrderBookStatus(orderBook);
     }

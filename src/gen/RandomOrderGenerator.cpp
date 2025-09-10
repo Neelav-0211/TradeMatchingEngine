@@ -1,6 +1,5 @@
 #include "RandomOrderGenerator.hpp"
 #include <chrono>
-#include <cmath>
 
 namespace tme {
 namespace gen {
@@ -8,56 +7,34 @@ namespace gen {
 using namespace std;
 using namespace std::chrono;
 
-// Generate a unique order ID
-uint64_t generateOrderId() {
-    static atomic<uint64_t> nextOrderId{1};
-    return nextOrderId.fetch_add(1, memory_order_relaxed);
+RandomOrderGenerator::RandomOrderGenerator(uint64_t seed, size_t num_tickers) : rng_(seed) {
+    symbols_.reserve(num_tickers);
+    for(size_t i = 0; i < num_tickers; ++i) {
+        symbols_.push_back("SYM" + to_string(i));
+    }
 }
 
-// Create a random order with default parameters
-Order createRandomOrder(const string& symbol, mt19937& rng) {
-    return createRandomOrder(symbol, rng, 90.0, 110.0, 1, 100);
-}
+vector<Command> RandomOrderGenerator::generate(size_t total_commands) {
+    vector<Command> cmds;
+    cmds.reserve(total_commands);
+    uniform_int_distribution<int> side_dist(0,1);
+    uniform_int_distribution<int> px_base(9000, 11000); // cents
+    uniform_int_distribution<int> sym_dist(0, (int)symbols_.size()-1);
+    uniform_int_distribution<int> qty_dist(1, 1000);
 
-// Create a random order with custom price and quantity ranges
-Order createRandomOrder(const string& symbol, mt19937& rng, 
-                       double minPrice, double maxPrice, 
-                       uint32_t minQuantity, uint32_t maxQuantity) {
-    // 50% chance of buy or sell
-    uniform_int_distribution<> sideDist(0, 1);
-    Side side = sideDist(rng) == 0 ? Side::BUY : Side::SELL;
-    
-    return createRandomOrder(symbol, rng, minPrice, maxPrice, 
-                           minQuantity, maxQuantity, side, OrderType::LIMIT);
-}
-
-// Create a random order with specified side
-Order createRandomOrder(const string& symbol, mt19937& rng, Side side) {
-    return createRandomOrder(symbol, rng, 90.0, 110.0, 1, 100, side, OrderType::LIMIT);
-}
-
-// Create a random order with all custom parameters
-Order createRandomOrder(const string& symbol, mt19937& rng,
-                       double minPrice, double maxPrice,
-                       uint32_t minQuantity, uint32_t maxQuantity,
-                       Side side, OrderType type) {
-    // Price distribution
-    uniform_real_distribution<> priceDist(minPrice, maxPrice);
-    
-    // Quantity distribution
-    uniform_int_distribution<uint32_t> quantityDist(minQuantity, maxQuantity);
-    
-    Order order;
-    order.orderId = generateOrderId();
-    order.symbol = symbol;
-    order.price = round(priceDist(rng) * 100) / 100;  // Round to 2 decimal places
-    order.quantity = quantityDist(rng);
-    order.side = side;
-    order.type = type;
-    order.timestamp = steady_clock::now();
-    
-    return order;
+    for(size_t i = 0; i < total_commands; ++i) {
+        Order o;
+        o.orderId = next_order_id_++;
+        o.side = side_dist(rng_) ? Side::BUY : Side::SELL;
+        o.price = px_base(rng_) + (o.side == Side::BUY ? - (rng_()%100) : + (rng_()%100));
+        o.symbol = symbols_[sym_dist(rng_)];
+        o.quantity = qty_dist(rng_);
+        o.timestamp = steady_clock::now();
+        o.type = OrderType::MARKET;
+        cmds.emplace_back(NewOrder{o});
+   }
+   return cmds;
 }
 
 } // namespace gen
-} // namespace tme
+} // namespace tme 

@@ -1,10 +1,12 @@
 #pragma once
 
 #include "OrderBook.hpp"
+#include "Command.hpp"
 #include <unordered_map>
 #include <string>
 #include <memory>
 #include <mutex>
+#include <vector>
 
 namespace tme {
 
@@ -21,6 +23,9 @@ public:
     
     // Process a new order
     void processOrder(const Order& order);
+    
+    // Process a batch of commands efficiently
+    void processBatch(const vector<Command>& commands);
     
     // Cancel an existing order
     bool cancelOrder(uint64_t orderId, const string& symbol);

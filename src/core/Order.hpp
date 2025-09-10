@@ -23,7 +23,7 @@ enum class Side {
 struct Order {
     uint64_t orderId;
     string symbol;
-    double price;
+    uint32_t price;
     uint32_t quantity;
     Side side;
     OrderType type;

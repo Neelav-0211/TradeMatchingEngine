@@ -1,35 +1,27 @@
 #pragma once
 
 #include "../core/Order.hpp"
+#include "../core/Command.hpp"
 #include <random>
 #include <string>
-#include <atomic>
 
 namespace tme {
 namespace gen {
 
+using namespace tme;
 using namespace std;
 
+class RandomOrderGenerator {
+public: 
+    RandomOrderGenerator(uint64_t seed, size_t num_tickers);
+    
+    vector<Command> generate(size_t total_commands);
 
-// Generate a unique order ID
-uint64_t generateOrderId();
-
-// Create a random order
-Order createRandomOrder(const string& symbol, mt19937& rng);
-
-// Create a random order with custom price and quantity ranges
-Order createRandomOrder(const string& symbol, mt19937& rng, 
-                       double minPrice, double maxPrice, 
-                       uint32_t minQuantity, uint32_t maxQuantity);
-
-// Create a random order with specified side (buy/sell)
-Order createRandomOrder(const string& symbol, mt19937& rng, Side side);
-
-// Create a random order with custom parameters
-Order createRandomOrder(const string& symbol, mt19937& rng,
-                       double minPrice, double maxPrice,
-                       uint32_t minQuantity, uint32_t maxQuantity,
-                       Side side, OrderType type);
+private:
+    mt19937_64 rng_;
+    vector<string> symbols_;
+    uint64_t next_order_id_{1};
+};
 
 } // namespace gen
 } // namespace tme

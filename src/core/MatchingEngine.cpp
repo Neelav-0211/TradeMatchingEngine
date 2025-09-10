@@ -20,6 +20,15 @@ void MatchingEngine::processOrder(const Order& order) {
     // Left as a placeholder for future implementation
 }
 
+void MatchingEngine::processBatch(const vector<Command>& commands) {
+    for(const Command &cmd : commands) {
+        if(holds_alternative<NewOrder>(cmd)) {
+            const NewOrder newOrder = get<NewOrder>(cmd);
+            processOrder(newOrder.order);
+        }
+    }   
+}
+
 bool MatchingEngine::cancelOrder(uint64_t orderId, const string& symbol) {
     shared_ptr<OrderBook> orderBook;
     
