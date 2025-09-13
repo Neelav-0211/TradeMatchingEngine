@@ -55,9 +55,14 @@ namespace tme
             }
             
             if (!task.symbol.empty()) {
-                processSymbolOrders(task.symbol, task.orders);
-                // Signal completion via promise
-                task.completion_promise.set_value();
+                try {
+                    processSymbolOrders(task.symbol, task.orders);
+                    // Signal completion via promise
+                    task.completion_promise.set_value();
+                } catch (exception) {
+                    task.completion_promise.set_exception(current_exception());
+                }
+
             }
         }
     }
@@ -102,10 +107,11 @@ namespace tme
                 Task task(symbol, orders);
                 futures.push_back(task.completion_promise.get_future());
                 tasks_.push(move(task));
+                taskCondition_.notify_one();
             }
         }
         
-        taskCondition_.notify_all();
+        //taskCondition_.notify_all();
         
         // Wait for all tasks to complete using futures
         for (auto& future : futures) {
