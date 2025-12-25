@@ -3,7 +3,7 @@
 A high-performance, low-latency trade matching engine implemented in C++.
 
 ## Overview
-This project focuses on implementing a trade matching engine with emphasis on performance optimization, concurrency, and efficient data structures. The purpose is to learn how to write scalable, high-performance C++ code and implement parallel code execution steps.
+This project focuses on implementing a trade matching engine with emphasis on performance optimization, concurrency, and efficient data structures. The purpose is to learn how to write scalable, high-performance C++ code.
 
 ## Features
 - Fast order book implementation
